@@ -1,5 +1,10 @@
 package mysql_practica3;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -20,7 +25,9 @@ public class conexionBD {
 	String login_ = "root";
 	String password_ = "root";
 	String url_ = "";
+	Statement st;
 
+	final Scanner entrada = new Scanner(System.in);
 	// ESTABLECEMOS LA CONEXION CON LA BASE DE DATOS
 	Connection connection_;
 
@@ -30,7 +37,8 @@ public class conexionBD {
 			db_ = nombreBD;
 			login_ = login;
 			password_ = password;
-			url_ = "jdbc:mysql://localhost/" + db_;
+			url_ = "jdbc:mysql://localhost/" + nombreBD;
+
 			// ESTABLECEMOS LA CONEXION CON LA BASE DE DATOS
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			connection_ = DriverManager.getConnection(url_, login_, password_);
@@ -40,9 +48,32 @@ public class conexionBD {
 			} else {
 				System.err.println("SE HA PRODUCIDO UN ERROR");
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
+
+			Statement st = connection_.createStatement();
+			String sql = "CREATE TABLE IF NOT EXISTS vehiculos " + "(matricula CHAR(7) not NULL, "
+					+ " marca VARCHAR(45) NULL, " + " modelo VARCHAR(45)  NULL, " + " precioVenta FLOAT(10)  NULL, "
+					+ " color VARCHAR(45)  NULL, " + " PRIMARY KEY ( matricula ))";
+			String sql1 = "CREATE TABLE IF NOT EXISTS clientes " + "(nif VARCHAR(9) not NULL, "
+					+ " nombre VARCHAR(20)  NULL, " + " apellido VARCHAR(45)  NULL, " + " PRIMARY KEY ( nif ))";
+			String sql2 = "CREATE TABLE IF NOT EXISTS descuentos " + "(idDescuento INTEGER not NULL, "
+					+ " descuento INTEGER  NULL, " + " motivoDesc INTEGER  NULL, " + " PRIMARY KEY ( idDescuento ))";
+			String sql3 = "CREATE TABLE IF NOT EXISTS ventas " + "(idVenta INTEGER not NULL, " + " fecha DATE NULL, "
+					+ " vehiculo_matricula CHAR(7) not NULL, " + " cliente_nif VARCHAR(9) not NULL, "
+					+ " id_descuento INTEGER not NULL, " + " PRIMARY KEY ( idVenta ))";
+			String sql4 = " ALTER TABLE ventas ADD CONSTRAINT FOREIGN KEY (vehiculo_matricula) REFERENCES vehiculos (matricula) ";
+			String sql5 = " ALTER TABLE ventas ADD CONSTRAINT FOREIGN KEY (cliente_nif) REFERENCES clientes(nif) ";
+			String sql6 = " ALTER TABLE ventas ADD CONSTRAINT FOREIGN KEY (id_descuento) REFERENCES descuentos(idDescuento) ";
+			st.executeUpdate(sql);
+			st.executeUpdate(sql1);
+			st.executeUpdate(sql2);
+			st.executeUpdate(sql3);
+			st.executeUpdate(sql4);
+			st.executeUpdate(sql5);
+			st.executeUpdate(sql6);
+
+		} catch (
+
+		ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -50,15 +81,39 @@ public class conexionBD {
 
 	}
 
-	public void login() throws SQLException {
-		Scanner entrada = new Scanner(System.in);
+	public void login() throws SQLException, ClassNotFoundException {
 		System.out.print("Introduce nombre de la base de datos: ");
-		String bd = entrada.next();
+		final String bd = entrada.next();
 		System.out.print("Introduce login de mysql: ");
-		String login = entrada.next();
+		final String login = entrada.next();
 		System.out.print("Introduce password de mysql: ");
-		String password = entrada.next();
+		final String password = entrada.next();
+		createDataBase(bd, login, password);
 		conectar(bd, login, password);
+
+	}
+
+	public void createDataBase(String nombreBD, String login, String password)
+			throws ClassNotFoundException, SQLException {
+		db_ = nombreBD;
+		login_ = login;
+		password_ = password;
+		url_ = "jdbc:mysql://localhost/";
+
+		// ESTABLECEMOS LA CONEXION CON LA BASE DE DATOS
+		Class.forName("com.mysql.cj.jdbc.Driver");
+		connection_ = DriverManager.getConnection(url_, login_, password_);
+
+		if (connection_ != null) {
+		} else {
+			System.err.println("SE HA PRODUCIDO UN ERROR");
+		}
+		Statement st = connection_.createStatement();
+		String schema = "CREATE DATABASE IF NOT EXISTS " + nombreBD + ";";
+		String query = "USE " + nombreBD;
+		st.executeUpdate(schema);
+		st.executeUpdate(query);
+
 	}
 
 	public void cerrarConexion() {
@@ -109,7 +164,7 @@ public class conexionBD {
 
 	public void insertarVehiculo() {
 		try {
-			Scanner entrada = new Scanner(System.in);
+
 			String sql = "INSERT INTO `Vehiculos` (`matricula`, `marca`, `modelo`, `precio de venta`, `color`) VALUES (?, ?, ?, ?, ?);\n";
 			PreparedStatement ps = connection_.prepareStatement(sql);
 
@@ -183,7 +238,6 @@ public class conexionBD {
 
 	public void modificarVehiculo() {
 		try {
-			Scanner entrada = new Scanner(System.in);
 
 			System.out.print("Introduce la matricula: ");
 			String matricula = entrada.next();
@@ -257,7 +311,6 @@ public class conexionBD {
 
 	public void eliminarVehiculo() {
 		try {
-			Scanner entrada = new Scanner(System.in);
 			System.out.print("Vehiculo a buscar (matricula): ");
 			String matricula = entrada.next();
 			if (existeVehiculo(matricula) == true) {
@@ -280,7 +333,6 @@ public class conexionBD {
 	public void infoVehiculo() {
 		try {
 			Statement st_ = connection_.createStatement();
-			Scanner entrada = new Scanner(System.in);
 			System.out.print("Busca el vehiculo por matricula: ");
 			String matricula = entrada.next();
 			if (existeVehiculo(matricula)) {
@@ -309,7 +361,6 @@ public class conexionBD {
 
 	public void insertarCliente() {
 		try {
-			Scanner entrada = new Scanner(System.in);
 			String sql = "INSERT INTO `clientes` (`nif`, `nombre`, `apellido`) VALUES (?, ?, ?);\n";
 			PreparedStatement ps = connection_.prepareStatement(sql);
 
@@ -374,7 +425,6 @@ public class conexionBD {
 
 	public void modificarCliente() {
 		try {
-			Scanner entrada = new Scanner(System.in);
 
 			System.out.print("Introduce el nif: ");
 			String nif = entrada.next();
@@ -429,7 +479,6 @@ public class conexionBD {
 
 	public void eliminarCliente() {
 		try {
-			Scanner entrada = new Scanner(System.in);
 			System.out.print("Cliente a buscar (nif): ");
 			String nif = entrada.next();
 			if (existeCliente(nif) == true) {
@@ -452,7 +501,6 @@ public class conexionBD {
 	public void info_Cliente() {
 		try {
 			Statement st_ = connection_.createStatement();
-			Scanner entrada = new Scanner(System.in);
 			System.out.print("Busca el cliente por nif: ");
 			String nif = entrada.next();
 			if (existeCliente(nif) == true) {
@@ -479,7 +527,6 @@ public class conexionBD {
 
 	public void insertarVentas() {
 		try {
-			Scanner entrada = new Scanner(System.in);
 			String sql = "INSERT INTO `ventas` (`idVenta`, `fecha`, `vehiculo_matricula`, `cliente_nif`, `id_descuento`) VALUES (?, ?, ?, ?, ?);\n";
 			PreparedStatement ps = connection_.prepareStatement(sql);
 
@@ -536,8 +583,7 @@ public class conexionBD {
 
 	public Date conseguirFechaSinRayarse() throws ParseException, InputMismatchException {
 		System.out.print("Introduzca la fecha (yyyy-MM-dd): ");
-		Scanner sc = new Scanner(System.in);
-		String str = sc.next();
+		String str = entrada.next();
 		Date date = Date.valueOf(str);
 		return date;
 	}
@@ -578,7 +624,6 @@ public class conexionBD {
 
 	public void modificarVentas() {
 		try {
-			Scanner entrada = new Scanner(System.in);
 
 			System.out.print("Introduce el id: ");
 			int id = entrada.nextInt();
@@ -648,7 +693,6 @@ public class conexionBD {
 
 	public void eliminarVentas() {
 		try {
-			Scanner entrada = new Scanner(System.in);
 			System.out.print("Introduce el id: ");
 			int id = entrada.nextInt();
 			if (existeVenta(id) == true) {
@@ -671,7 +715,6 @@ public class conexionBD {
 	public void info_ventas() {
 		try {
 			Statement st_ = connection_.createStatement();
-			Scanner entrada = new Scanner(System.in);
 			System.out.print("Introduce el id: ");
 			int id = entrada.nextInt();
 			if (existeVenta(id) == true) {
